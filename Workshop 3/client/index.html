@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Profesores y Cursos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="mb-4">CRUD Profesores y Cursos</h1>
+
+        <div class="row g-4">
+
+            <!-- PROFESORES -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Profesores</div>
+                    <div class="card-body">
+
+                        <form id="profForm" class="row g-2">
+                            <input type="hidden" id="profId">
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profNombre">Nombre</label>
+                                <input class="form-control" id="profNombre" required placeholder="Ingrese el nombre">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profApellidos">Apellidos</label>
+                                <input class="form-control" id="profApellidos" required
+                                    placeholder="Ingrese los apellidos">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profCedula">Cédula</label>
+                                <input class="form-control" id="profCedula" required placeholder="Ingrese la cédula">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profEdad">Edad</label>
+                                <input class="form-control" id="profEdad" type="number" min="0" required
+                                    placeholder="Ingrese la edad">
+                            </div>
+
+                            <div class="col-12 d-flex gap-2 mt-2">
+                                <button class="btn btn-primary" type="submit" id="btnProfGuardar">Guardar</button>
+                                <button class="btn btn-outline-secondary" type="button"
+                                    id="btnProfLimpiar">Limpiar</button>
+                                <button class="btn btn-outline-dark ms-auto" type="button"
+                                    id="btnProfRecargar">Recargar</button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Cédula</th>
+                                        <th>Edad</th>
+                                        <th style="width:140px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="profTbody">
+                                    <tr>
+                                        <td colspan="4" class="text-muted">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info py-2 mt-3 mb-0 small">
+                            * No permite borrar profesores con cursos asignados.
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- CURSOS -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Cursos</div>
+                    <div class="card-body">
+
+                        <form id="cursoForm" class="row g-2">
+                            <input type="hidden" id="cursoId">
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="cursoNombre">Nombre</label>
+                                <input class="form-control" id="cursoNombre" required placeholder="Nombre del curso">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="cursoCodigo">Código</label>
+                                <input class="form-control" id="cursoCodigo" required placeholder="Ej: ISW-711">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="cursoDesc">Descripción</label>
+                                <input class="form-control" id="cursoDesc" required placeholder="Descripción">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="cursoProfe">Profesor</label>
+                                <select class="form-select" id="cursoProfe" required></select>
+                            </div>
+
+                            <div class="col-12 d-flex gap-2 mt-2">
+                                <button class="btn btn-success" type="submit" id="btnCursoGuardar">Guardar</button>
+                                <button class="btn btn-outline-secondary" type="button"
+                                    id="btnCursoLimpiar">Limpiar</button>
+                                <button class="btn btn-outline-dark ms-auto" type="button"
+                                    id="btnCursoRecargar">Recargar</button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Código</th>
+                                        <th>Profesor</th>
+                                        <th style="width:140px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cursoTbody">
+                                    <tr>
+                                        <td colspan="4" class="text-muted">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info py-2 mt-3 mb-0 small">
+                            Si no aparecen profesores en el select, primero crea uno.
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="msg" class="mt-3"></div>
+    </div>
+
+    <script>
+        // (lo dejo fijo porque es local)
+        const API = "http://localhost:3001";
+
+        function showMsg(texto, tipo = "success") {
+            const box = document.getElementById("msg");
+            box.innerHTML = `<div class="alert alert-${tipo}">${texto}</div>`;
+            setTimeout(() => box.innerHTML = "", 3000);
+        }
+
+        // ==========================
+        // PROFESORES
+        // ==========================
+        const profForm = document.getElementById("profForm");
+        const profTbody = document.getElementById("profTbody");
+
+        const profId = document.getElementById("profId");
+        const profNombre = document.getElementById("profNombre");
+        const profApellidos = document.getElementById("profApellidos");
+        const profCedula = document.getElementById("profCedula");
+        const profEdad = document.getElementById("profEdad");
+
+        function limpiarProfe() {
+            profId.value = "";
+            profForm.reset();
+            document.getElementById("btnProfGuardar").textContent = "Guardar";
+        }
+
+        async function traerProfes() {
+            profTbody.innerHTML = `<tr><td colspan="4" class="text-muted">Cargando...</td></tr>`;
+
+            try {
+                const res = await fetch(API + "/professors");
+                const profes = await res.json();
+
+                if (!Array.isArray(profes) || profes.length === 0) {
+                    profTbody.innerHTML = `<tr><td colspan="4" class="text-muted">No hay profesores.</td></tr>`;
+                } else {
+                    profTbody.innerHTML = "";
+                    profes.forEach(p => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                        <td>${p.nombre} ${p.apellidos}</td>
+                        <td>${p.cedula}</td>
+                        <td>${p.edad}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary" data-accion="edit" data-id="${p._id}">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" data-accion="del" data-id="${p._id}">Eliminar</button>
+                            </div>
+                        </td>
+                        `;
+                        tr.dataset.data = JSON.stringify(p);
+                        profTbody.appendChild(tr);
+                    });
+                }
+
+                // refresca el select de cursos también
+                await llenarSelectProfes();
+
+            } catch (err) {
+                profTbody.innerHTML = `<tr><td colspan="4" class="text-danger">Error cargando profesores</td></tr>`;
+            }
+        }
+
+        profForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                nombre: profNombre.value.trim(),
+                apellidos: profApellidos.value.trim(),
+                cedula: profCedula.value.trim(),
+                edad: Number(profEdad.value)
+            };
+
+            // validación simple (sin tanta cosa)
+            if (!payload.nombre || !payload.apellidos || !payload.cedula) {
+                showMsg("Completa los campos del profesor.", "warning");
+                return;
+            }
+
+            const editando = profId.value !== "";
+            const url = editando ? `${API}/professors/${profId.value}` : `${API}/professors`;
+            const method = editando ? "PUT" : "POST";
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showMsg(err.message || "No se pudo guardar el profesor.", "danger");
+                    return;
+                }
+
+                showMsg(editando ? "Profesor actualizado." : "Profesor creado.");
+                limpiarProfe();
+                await traerProfes();
+                await traerCursos();
+
+            } catch (err) {
+                showMsg("Error conectando con la API.", "danger");
+            }
+        });
+
+        profTbody.addEventListener("click", async (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+
+            const accion = btn.dataset.accion;
+            const id = btn.dataset.id;
+
+            if (accion === "edit") {
+                const tr = btn.closest("tr");
+                const p = JSON.parse(tr.dataset.data);
+
+                profId.value = p._id;
+                profNombre.value = p.nombre;
+                profApellidos.value = p.apellidos;
+                profCedula.value = p.cedula;
+                profEdad.value = p.edad;
+
+                document.getElementById("btnProfGuardar").textContent = "Actualizar";
+            }
+
+            if (accion === "del") {
+                const ok = confirm("¿Seguro que desea eliminar el profesor?");
+                if (!ok) return;
+
+                try {
+                    const res = await fetch(`${API}/professors/${id}`, { method: "DELETE" });
+
+                    if (!res.ok && res.status !== 204) {
+                        const err = await res.json().catch(() => ({}));
+                        showMsg(err.message || "No se pudo eliminar.", "danger");
+                        return;
+                    }
+
+                    showMsg("Profesor eliminado.");
+                    await traerProfes();
+                    // por si se refleja en cursos
+                    await traerCursos();
+
+                } catch (err) {
+                    showMsg("Error eliminando profesor.", "danger");
+                }
+            }
+        });
+
+        document.getElementById("btnProfLimpiar").addEventListener("click", limpiarProfe);
+        document.getElementById("btnProfRecargar").addEventListener("click", traerProfes);
+
+        // ==========================
+        // CURSOS
+        // ==========================
+        const cursoForm = document.getElementById("cursoForm");
+        const cursoTbody = document.getElementById("cursoTbody");
+
+        const cursoId = document.getElementById("cursoId");
+        const cursoNombre = document.getElementById("cursoNombre");
+        const cursoCodigo = document.getElementById("cursoCodigo");
+        const cursoDesc = document.getElementById("cursoDesc");
+        const cursoProfe = document.getElementById("cursoProfe");
+
+        function limpiarCurso() {
+            cursoId.value = "";
+            cursoForm.reset();
+            document.getElementById("btnCursoGuardar").textContent = "Guardar";
+        }
+
+        async function llenarSelectProfes() {
+            try {
+                const res = await fetch(API + "/professors");
+                const profes = await res.json();
+
+                cursoProfe.innerHTML = "";
+
+                if (!Array.isArray(profes) || profes.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.value = "";
+                    opt.textContent = "No hay profesores (crea uno primero)";
+                    cursoProfe.appendChild(opt);
+                    cursoProfe.disabled = true;
+                    return;
+                }
+
+                cursoProfe.disabled = false;
+
+                const opt0 = document.createElement("option");
+                opt0.value = "";
+                opt0.textContent = "Seleccione un profesor...";
+                cursoProfe.appendChild(opt0);
+
+                profes.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p._id;
+                    opt.textContent = `${p.nombre} ${p.apellidos}`;
+                    cursoProfe.appendChild(opt);
+                });
+
+            } catch (err) {
+                cursoProfe.innerHTML = `<option value="">Error cargando profes</option>`;
+                cursoProfe.disabled = true;
+            }
+        }
+
+        async function traerCursos() {
+            cursoTbody.innerHTML = `<tr><td colspan="4" class="text-muted">Cargando...</td></tr>`;
+
+            try {
+                const res = await fetch(API + "/courses");
+                const cursos = await res.json();
+
+                if (!Array.isArray(cursos) || cursos.length === 0) {
+                    cursoTbody.innerHTML = `<tr><td colspan="4" class="text-muted">No hay cursos.</td></tr>`;
+                    return;
+                }
+
+                cursoTbody.innerHTML = "";
+                cursos.forEach(c => {
+                    let profeTxt = "Sin profesor";
+                    if (c.profesorId) {
+                        // a veces viene populate y a veces solo id
+                        if (typeof c.profesorId === "object") {
+                            profeTxt = `${c.profesorId.nombre} ${c.profesorId.apellidos}`;
+                        }
+                    }
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${c.nombre}</td>
+                        <td>${c.codigo}</td>
+                        <td>${profeTxt}</td>
+                        <td>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-success" data-accion="edit" data-id="${c._id}">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" data-accion="del" data-id="${c._id}">Eliminar</button>
+                        </div>
+                        </td>
+                    `;
+                    tr.dataset.data = JSON.stringify(c);
+                    cursoTbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                cursoTbody.innerHTML = `<tr><td colspan="4" class="text-danger">Error cargando cursos</td></tr>`;
+            }
+        }
+
+        cursoForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (!cursoProfe.value) {
+                showMsg("Seleccione un profesor.", "warning");
+                return;
+            }
+
+            const payload = {
+                nombre: cursoNombre.value.trim(),
+                codigo: cursoCodigo.value.trim(),
+                descripcion: cursoDesc.value.trim(),
+                profesorId: cursoProfe.value
+            };
+
+            if (!payload.nombre || !payload.codigo || !payload.descripcion) {
+                showMsg("Completa los campos del curso.", "warning");
+                return;
+            }
+
+            const editando = cursoId.value !== "";
+            const url = editando ? `${API}/courses/${cursoId.value}` : `${API}/courses`;
+            const method = editando ? "PUT" : "POST";
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showMsg(err.message || "No se pudo guardar el curso.", "danger");
+                    return;
+                }
+
+                showMsg(editando ? "Curso actualizado." : "Curso creado.");
+                limpiarCurso();
+                await traerCursos();
+
+            } catch (err) {
+                showMsg("Error conectando con la API.", "danger");
+            }
+        });
+
+        cursoTbody.addEventListener("click", async (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+
+            const accion = btn.dataset.accion;
+            const id = btn.dataset.id;
+
+            if (accion === "edit") {
+                const tr = btn.closest("tr");
+                const c = JSON.parse(tr.dataset.data);
+
+                cursoId.value = c._id;
+                cursoNombre.value = c.nombre;
+                cursoCodigo.value = c.codigo;
+                cursoDesc.value = c.descripcion;
+
+                // si viene populate
+                if (c.profesorId && typeof c.profesorId === "object") {
+                    cursoProfe.value = c.profesorId._id;
+                } else {
+                    cursoProfe.value = c.profesorId || "";
+                }
+
+                document.getElementById("btnCursoGuardar").textContent = "Actualizar";
+            }
+
+            if (accion === "del") {
+                const ok = confirm("¿Eliminar curso?");
+                if (!ok) return;
+
+                try {
+                    const res = await fetch(`${API}/courses/${id}`, { method: "DELETE" });
+
+                    if (!res.ok && res.status !== 204) {
+                        const err = await res.json().catch(() => ({}));
+                        showMsg(err.message || "No se pudo eliminar.", "danger");
+                        return;
+                    }
+
+                    showMsg("Curso eliminado.");
+                    await traerCursos();
+
+                } catch (err) {
+                    showMsg("Error eliminando curso.", "danger");
+                }
+            }
+        });
+
+        document.getElementById("btnCursoLimpiar").addEventListener("click", limpiarCurso);
+        document.getElementById("btnCursoRecargar").addEventListener("click", traerCursos);
+
+        // ==========================
+        // INIT
+        // ==========================
+        (async function () {
+            await traerProfes();
+            await traerCursos();
+        })();
+    </script>
+</body>
+
+</html>
